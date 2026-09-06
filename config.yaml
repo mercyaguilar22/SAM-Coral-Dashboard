@@ -1,0 +1,76 @@
+# =============================================================================
+# SAM Coral Bleaching Monitor — Configuración Regional
+# Para replicar en otra región: edita SOLO esta sección "region" y "thresholds"
+# =============================================================================
+
+region:
+  name: "SAM"
+  full_name: "Sistema Arrecifal Mesoamericano"
+  shapefile: "data/static/AREA_SAM.geojson"
+  bbox:
+    lat_min: 15.0
+    lat_max: 22.0
+    lon_min: -90.0
+    lon_max: -83.0
+  countries: ["México", "Belice", "Guatemala", "Honduras"]
+  dashboard_center: [18.5, -87.5]
+  dashboard_zoom: 8
+
+# Fuente de datos térmica — NOAA Coral Reef Watch ERDDAP
+noaa:
+  erddap_server: "https://coastwatch.pfeg.noaa.gov/erddap"
+  dataset_id: "NOAA_DHW"
+  variables:
+    - "CRW_SST"
+    - "CRW_SSTANOMALY"
+    - "CRW_HOTSPOT"
+    - "CRW_DHW"
+    - "CRW_BAA"
+  # Rutas a los datos históricos ya descargados (no se mueven)
+  local_data_path: "C:/Users/mercy/Documents/MAESTRIA_GEOMATICA/TESIS_GEOMATICA/DATA/DATOS_NOAA2"
+
+# Umbrales de alerta
+thresholds:
+  noaa_global: 4.0          # Umbral global NOAA (°C·semanas) — no cambiar
+  regional_optimized: 2.97  # Umbral optimizado para el SAM (°C·semanas)
+  hotspot_min: 1.0          # HotSpot mínimo para acumular DHW
+
+# Datos in situ
+insitu:
+  coralwatch_json: "C:/Users/mercy/Documents/MAESTRIA_GEOMATICA/TESIS_GEOMATICA/DATA/DATOS_NOAA2/coral_watch_points.json"
+  coralwatch_sam_geojson: "C:/Users/mercy/Documents/MAESTRIA_GEOMATICA/TESIS_GEOMATICA/DATA/DATOS_NOAA2/coral_watch_points_SAM.geojson"
+  # ReefCheck eliminado — datos no útiles
+  fundaeco: null  # Integrar si se tienen datos actualizados
+  # Filtros de calidad (CoralWatch methodology)
+  min_corals_per_colony: 10
+  bleaching_threshold_pct: 0.20
+
+# Modelo
+model:
+  original_path: "C:/Users/mercy/Documents/MAESTRIA_GEOMATICA/TESIS_GEOMATICA/DATA/DATOS_NOAA2/RF_Model_Optimized.pkl"
+  corrected_path: "data/models/RF_Model_v2_corrected.pkl"
+  train_years: [2018, 2019, 2020, 2021, 2022]
+  test_years: [2023, 2024]
+  features:
+    - "CRW_DHW"        # Valor del día exacto de observación
+    - "CRW_SST"
+    - "CRW_SSTANOMALY"
+    - "CRW_HOTSPOT"
+    - "CRW_BAA"
+    - "lat"
+    - "lon"
+    - "month"
+    - "year"
+
+# Dashboard
+dashboard:
+  title: "SAM Coral Bleaching Monitor"
+  subtitle: "Sistema Arrecifal Mesoamericano — Monitoreo de Blanqueamiento Coralino"
+  data_daily_path: "data/daily"
+  port: 8501
+  update_hour_utc: 6  # 06:00 UTC = 00:00 CST
+
+# Almacenamiento Google Drive (histórico)
+storage:
+  gdrive_folder: "SAM-Coral-Dashboard"
+  local_cache_days: 30  # Días de datos a mantener localmente
