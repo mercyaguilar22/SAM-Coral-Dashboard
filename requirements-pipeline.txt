@@ -1,0 +1,10 @@
+# Requisitos adicionales para el pipeline de descarga de NOAA y entrenamiento (GitHub Actions / Local)
+-r requirements.txt
+
+# Conexión API y Rasters NetCDF
+erddapy>=2.1.0
+xarray>=2024.1.0
+netCDF4>=1.6.5
+imbalanced-learn>=0.12.0
+tqdm>=4.66.0
+python-dateutil>=2.9.0

@@ -6,9 +6,16 @@ Plataforma interactiva para monitoreo y alerta temprana de blanqueamiento
 de coral en el Sistema Arrecifal Mesoamericano con calibración regional (umbral 2.97 °C·sem).
 """
 
+import sys
 import json
 from datetime import datetime
 from pathlib import Path
+
+# Asegurar que la raíz del proyecto esté en sys.path
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
