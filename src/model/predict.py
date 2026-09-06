@@ -94,25 +94,9 @@ def predict_from_dataset(ds: xr.Dataset, date: datetime = None) -> gpd.GeoDataFr
     df["rf_bleaching_proba"] = model.predict_proba(X)[:, 1]
     df["rf_bleaching_pred"] = (df["rf_bleaching_proba"] >= proba_thresh).astype(int)
 
-    # Clasificación de alertas según umbrales:
-    # 0: Sin estrés
-    # 1: Advertencia (Watch): HotSpot > 0
-    # 2: Alerta Regional Optimizada: DHW >= 2.97
-    # 3: Alerta NOAA Global: DHW >= 4.0
-    # 4: Alerta Severa NOAA: DHW >= 8.0
-    conditions = [
-        (df["CRW_DHW"] >= 8.0),
-        (df["CRW_DHW"] >= THRESH_NOAA),
-        (df["CRW_DHW"] >= THRESH_REGIONAL),
-        (df["CRW_HOTSPOT"] > 0),
-    ]
-    choices = [
-        "Alerta Nivel 2 (Severo)",
-        "Alerta Nivel 1 (NOAA Global)",
-        "Alerta Regional SAM (Optimizada)",
-        "Advertencia Térmica (Watch)",
-    ]
-    df["alert_level"] = np.select(conditions, choices, default="Sin Estrés")
+    from src.analysis.alerts import categorize_alerts
+    df = categorize_alerts(df)
+    df["alert_level"] = df["alert_category"]
 
     # Convertir a GeoDataFrame
     gdf = gpd.GeoDataFrame(

@@ -64,7 +64,6 @@ THRESH_REG = CFG["thresholds"]["regional_optimized"]
 THRESH_NOAA = CFG["thresholds"]["noaa_global"]
 
 
-@st.cache_data(ttl=3600)
 def load_latest_data():
     """Carga los datos geoespaciales más recientes generados por el pipeline."""
     latest_geojson = DAILY_DIR / "latest.geojson"
@@ -76,6 +75,8 @@ def load_latest_data():
     if latest_geojson.exists():
         try:
             gdf = gpd.read_file(latest_geojson)
+            # Recalcular categorías con la escala oficial de 9 niveles
+            gdf = categorize_alerts(gdf)
         except Exception as e:
             st.error(f"Error cargando GeoJSON: {e}")
             
@@ -208,9 +209,9 @@ with tab_map:
     with col_t1:
         sel_year = st.select_slider(
             "⏳ Línea de Tiempo Histórica:",
-            options=["Todos los años (Consolidado)", 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+            options=["Todos los años (Consolidado)", 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
             value="Todos los años (Consolidado)",
-            help="Desliza para explorar las condiciones y alertas observadas en cada año."
+            help="Desliza para explorar las condiciones y alertas observadas desde 2018 hasta el presente (2026)."
         )
     with col_t2:
         if sel_year != "Todos los años (Consolidado)":
@@ -226,8 +227,12 @@ with tab_map:
             gdf_map = gdf_map[gdf_map["year"] == sel_year]
         if sel_month > 0 and "month" in gdf_map.columns:
             gdf_map = gdf_map[gdf_map["month"] == sel_month]
+
+    if sel_year in [2025, 2026] and len(gdf_map) == 0:
+        st.info(f"📡 **Año {sel_year} (Vigilancia Satelital en Tiempo Real):** El satélite NOAA CRW actualiza diariamente la capa continua de SST y DHW a las 06:00 UTC. La red de estaciones arrecifales del SAM se muestra como referencia de monitoreo activo.")
+        gdf_map = gdf_current.sample(n=min(len(gdf_current), 250), random_state=42)
             
-    col_map, col_legend = st.columns([4, 1])
+    col_map, col_legend = st.columns([3.8, 1.2])
     
     with col_map:
         base_map = create_base_map(center_lat=CFG["region"]["dashboard_center"][0],
@@ -238,13 +243,23 @@ with tab_map:
         st_folium(base_map, width="100%", height=560)
         
     with col_legend:
-        with st.expander("ℹ️ Leyenda de Alertas", expanded=True):
-            colors = get_alert_color_map()
-            for label, hex_color in colors.items():
+        with st.expander("ℹ️ Escala de Alertas e Impacto", expanded=True):
+            ALERT_LEVELS_DISPLAY = [
+                ("Sin Estrés", "#bbf2f6", "HotSpot <= 0", "Sin blanqueamiento"),
+                ("Vigilancia (Watch)", "#ffff00", "0 < HotSpot < 1", "Monitoreo preventivo"),
+                ("Advertencia (Warning)", "#f99f1b", "HotSpot >= 1 y DHW < 2.97", "Posible blanqueamiento"),
+                ("Alerta Regional SAM (2.97)", "#ff5500", "2.97 <= DHW < 4.0", "Detección temprana SAM"),
+                ("Nivel 1 (Alerta NOAA)", "#ff0000", "4.0 <= DHW < 8.0", "Blanqueamiento arrecifal"),
+                ("Nivel 2 (AL2)", "#800000", "8.0 <= DHW < 12.0", "Mortalidad corales sensibles"),
+                ("Nivel 3 (AL3)", "#8c4a1e", "12.0 <= DHW < 16.0", "Mortalidad multi-especie"),
+                ("Nivel 4 (AL4)", "#ff00ff", "16.0 <= DHW < 20.0", "Mortalidad severa (>50%)"),
+                ("Nivel 5 (AL5)", "#4b0082", "DHW >= 20.0", "Mortalidad casi completa (>80%)"),
+            ]
+            for name, color, criteria, impact in ALERT_LEVELS_DISPLAY:
                 st.markdown(
-                    f"<div style='display: flex; align-items: center; margin-bottom: 5px;'>"
-                    f"<span style='background-color: {hex_color}; width: 13px; height: 13px; border-radius: 50%; display: inline-block; margin-right: 7px;'></span>"
-                    f"<span style='font-size: 12px;'>{label}</span>"
+                    f"<div style='display: flex; align-items: flex-start; margin-bottom: 6px; line-height: 1.25;'>"
+                    f"<span style='background-color: {color}; width: 13px; height: 13px; border-radius: 50%; display: inline-block; margin-right: 7px; flex-shrink: 0; margin-top: 2px; border: 1px solid rgba(0,0,0,0.3);'></span>"
+                    f"<div><b style='font-size: 11px;'>{name}</b><br><span style='font-size: 10px; color: #888;'>{criteria} • {impact}</span></div>"
                     f"</div>",
                     unsafe_allow_html=True
                 )

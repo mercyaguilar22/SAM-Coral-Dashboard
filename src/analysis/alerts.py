@@ -55,17 +55,17 @@ def categorize_alerts(df_or_gdf: pd.DataFrame) -> pd.DataFrame:
         (df["CRW_DHW"] >= 8.0),
         (df["CRW_DHW"] >= 4.0),
         (df["CRW_DHW"] >= THRESH_REGIONAL),
-        ((df["CRW_DHW"] > 0) & (df["CRW_HOTSPOT"] >= 1.0)),
+        ((df["CRW_DHW"] > 0) | (df["CRW_HOTSPOT"] >= 1.0)),
         (df["CRW_HOTSPOT"] > 0),
     ]
     
     labels = [
-        "Nivel 5 (Mortalidad Casi Completa >80%)",
-        "Nivel 4 (Mortalidad Severa >50%)",
-        "Nivel 3 (Mortalidad Multi-Especie)",
-        "Nivel 2 (Mortalidad Corales Sensibles)",
-        "Nivel 1 (Riesgo Blanqueamiento Arrecifal)",
-        "Alerta Regional SAM (Optimizada 2.97)",
+        "Nivel 5 (AL5)",
+        "Nivel 4 (AL4)",
+        "Nivel 3 (AL3)",
+        "Nivel 2 (AL2)",
+        "Nivel 1 (Alerta NOAA)",
+        "Alerta Regional SAM (2.97)",
         "Advertencia (Warning)",
         "Vigilancia (Watch)",
     ]
@@ -108,15 +108,44 @@ def generate_alert_summary(gdf: gpd.GeoDataFrame) -> Dict[str, Any]:
 
 
 def get_alert_color_map() -> Dict[str, str]:
-    """Paleta oficial de colores según la escala de impacto NOAA CRW (Imagen de referencia)."""
+    """Paleta oficial de colores según la escala de impacto NOAA CRW 2024."""
     return {
-        "Sin Estrés": "#bbf2f6",                               # No Stress - Celeste claro
-        "Vigilancia (Watch)": "#ffff00",                       # Watch - Amarillo
-        "Advertencia (Warning)": "#f99f1b",                    # Warning - Naranja
-        "Alerta Regional SAM (Optimizada 2.97)": "#ff5500",    # Alerta Regional SAM - Naranja rojizo
-        "Nivel 1 (Riesgo Blanqueamiento Arrecifal)": "#ff0000", # Alert Level 1 - Rojo
-        "Nivel 2 (Mortalidad Corales Sensibles)": "#800000",    # AL2 - Rojo vino / Maroon
-        "Nivel 3 (Mortalidad Multi-Especie)": "#8c4a1e",        # AL3 - Marrón
-        "Nivel 4 (Mortalidad Severa >50%)": "#ff00ff",         # AL4 - Magenta / Fucsia
-        "Nivel 5 (Mortalidad Casi Completa >80%)": "#4b0082",  # AL5 - Púrpura oscuro
+        # Escala oficial estándar
+        "Sin Estrés": "#bbf2f6",
+        "Sin Estrés (No Stress)": "#bbf2f6",
+        "No Stress": "#bbf2f6",
+        "Vigilancia (Watch)": "#ffff00",
+        "Vigilancia (Bleach Watch)": "#ffff00",
+        "Watch": "#ffff00",
+        "Advertencia (Warning)": "#f99f1b",
+        "Advertencia (Bleaching Warning)": "#f99f1b",
+        "Advertencia Térmica (Watch)": "#f99f1b",
+        "Warning": "#f99f1b",
+        "Alerta Regional SAM (2.97)": "#ff5500",
+        "Alerta Regional SAM (Optimizada 2.97)": "#ff5500",
+        "Alerta Regional SAM (Optimizada)": "#ff5500",
+        "Alerta Regional SAM": "#ff5500",
+        "Nivel 1 (Alerta NOAA)": "#ff0000",
+        "Nivel 1 (Alert Level 1)": "#ff0000",
+        "Nivel 1 (Riesgo Blanqueamiento Arrecifal)": "#ff0000",
+        "Nivel 1 (Alerta Global NOAA)": "#ff0000",
+        "Alert Level 1": "#ff0000",
+        "Nivel 2 (AL2)": "#800000",
+        "Nivel 2 (Alert Level 2)": "#800000",
+        "Nivel 2 (Mortalidad Corales Sensibles)": "#800000",
+        "Nivel 2 (Severo - Mortalidad Probable)": "#800000",
+        "AL2": "#800000",
+        "Nivel 3 (AL3)": "#8c4a1e",
+        "Nivel 3 (Alert Level 3)": "#8c4a1e",
+        "Nivel 3 (Mortalidad Multi-Especie)": "#8c4a1e",
+        "AL3": "#8c4a1e",
+        "Nivel 4 (AL4)": "#ff00ff",
+        "Nivel 4 (Alert Level 4)": "#ff00ff",
+        "Nivel 4 (Mortalidad Severa >50%)": "#ff00ff",
+        "AL4": "#ff00ff",
+        "Nivel 5 (AL5)": "#4b0082",
+        "Nivel 5 (Alert Level 5)": "#4b0082",
+        "Nivel 5 (Mortalidad Casi Completa >80%)": "#4b0082",
+        "AL5": "#4b0082",
     }
+
