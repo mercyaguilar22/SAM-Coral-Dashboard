@@ -1,11 +1,11 @@
 {
-  "total_points": 144,
-  "max_dhw": 10.11,
-  "max_sst": 30.7,
-  "alerts_regional_sam": 114,
-  "alerts_noaa_global": 50,
-  "alerts_severe_level2": 11,
-  "early_detection_gain_points": 64,
-  "last_updated_date": "2026-09-06",
-  "last_updated_timestamp": "2026-09-06T06:00:00Z"
+  "total_points": 1830,
+  "max_dhw": 20.53,
+  "max_sst": 29.33,
+  "alerts_regional_sam": 22,
+  "alerts_noaa_global": 18,
+  "alerts_severe_level2": 9,
+  "early_detection_gain_points": 4,
+  "last_updated_date": "2024-12-31",
+  "last_updated_timestamp": "2024-12-31T23:59:59Z"
 }

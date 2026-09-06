@@ -208,10 +208,10 @@ with tab_map:
     col_t1, col_t2 = st.columns([3, 1])
     with col_t1:
         sel_year = st.select_slider(
-            "⏳ Línea de Tiempo Histórica:",
-            options=["Todos los años (Consolidado)", 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+            "⏳ Línea de Tiempo Histórica (Calibrada 2018-2024):",
+            options=["Todos los años (Consolidado)", 2018, 2019, 2020, 2021, 2022, 2023, 2024],
             value="Todos los años (Consolidado)",
-            help="Desliza para explorar las condiciones y alertas observadas desde 2018 hasta el presente (2026)."
+            help="Desliza para explorar las condiciones y alertas observadas en cada año de estudio (2018-2024). El mapa raster de fondo y los puntos se actualizan dinámicamente para cada año."
         )
     with col_t2:
         if sel_year != "Todos los años (Consolidado)":
@@ -227,17 +227,15 @@ with tab_map:
             gdf_map = gdf_map[gdf_map["year"] == sel_year]
         if sel_month > 0 and "month" in gdf_map.columns:
             gdf_map = gdf_map[gdf_map["month"] == sel_month]
-
-    if sel_year in [2025, 2026] and len(gdf_map) == 0:
-        st.info(f"📡 **Año {sel_year} (Vigilancia Satelital en Tiempo Real):** El satélite NOAA CRW actualiza diariamente la capa continua de SST y DHW a las 06:00 UTC. La red de estaciones arrecifales del SAM se muestra como referencia de monitoreo activo.")
-        gdf_map = gdf_current.sample(n=min(len(gdf_current), 250), random_state=42)
             
     col_map, col_legend = st.columns([3.8, 1.2])
     
     with col_map:
+        active_year = sel_year if isinstance(sel_year, int) else None
         base_map = create_base_map(center_lat=CFG["region"]["dashboard_center"][0],
                                    center_lon=CFG["region"]["dashboard_center"][1],
-                                   zoom=CFG["region"]["dashboard_zoom"])
+                                   zoom=CFG["region"]["dashboard_zoom"],
+                                   year=active_year)
         add_sam_boundary(base_map, SAM_SHP_PATH)
         add_alert_points(base_map, gdf_map)
         st_folium(base_map, width="100%", height=560)

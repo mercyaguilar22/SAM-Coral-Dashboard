@@ -27,12 +27,15 @@ def get_image_data_uri(png_path: Path) -> Optional[str]:
     return None
 
 
-def create_base_map(center_lat: float = 18.5, center_lon: float = -87.5, zoom: int = 8) -> folium.Map:
+def create_base_map(center_lat: float = 18.5, 
+                    center_lon: float = -87.5, 
+                    zoom: int = 8,
+                    year: Optional[int] = None) -> folium.Map:
     """
     Crea el mapa base con imagen satelital Esri World Imagery como mapa base único
-    y añade las capas continuas satelitales de SST y DHW recortadas al SAM.
+    y añade las capas continuas satelitales de SST y DHW recortadas al SAM correspondientes
+    al año seleccionado (2018-2024) o el consolidado multianual.
     """
-    # tiles=None permite asignar un nombre limpio al TileLayer sin mostrar la URL en la leyenda
     m = folium.Map(
         location=[center_lat, center_lon],
         zoom_start=zoom,
@@ -49,12 +52,33 @@ def create_base_map(center_lat: float = 18.5, center_lon: float = -87.5, zoom: i
         control=True,
     ).add_to(m)
 
-    # 2. Capa continua de SST recortada al SAM (idéntica a los productos de tesis)
-    sst_png = STATIC_DIR / "mean_sst_sam.png"
+    # Determinar si existen rasters anuales específicos
+    rasters_dir = STATIC_DIR / "rasters"
+    sst_png = None
+    dhw_png = None
+    label_suffix = ""
+
+    if year and rasters_dir.exists():
+        annual_sst = rasters_dir / f"sst_{year}.png"
+        annual_dhw = rasters_dir / f"dhw_{year}.png"
+        if annual_sst.exists():
+            sst_png = annual_sst
+            label_suffix = f" ({year})"
+        if annual_dhw.exists():
+            dhw_png = annual_dhw
+
+    if sst_png is None:
+        sst_png = STATIC_DIR / "mean_sst_sam.png"
+        label_suffix = " (Consolidado 2018-2024)"
+
+    if dhw_png is None:
+        dhw_png = STATIC_DIR / "mean_dhw_sam.png"
+
+    # 2. Capa continua de SST recortada al SAM
     sst_uri = get_image_data_uri(sst_png)
     if sst_uri:
         folium.raster_layers.ImageOverlay(
-            name="SST - NOAA/CRW",
+            name=f"SST - NOAA/CRW{label_suffix}",
             image=sst_uri,
             bounds=[[15.70, -88.95], [22.40, -83.05]],
             opacity=0.80,
@@ -64,11 +88,10 @@ def create_base_map(center_lat: float = 18.5, center_lon: float = -87.5, zoom: i
         ).add_to(m)
 
     # 3. Capa continua de DHW recortada al SAM
-    dhw_png = STATIC_DIR / "mean_dhw_sam.png"
     dhw_uri = get_image_data_uri(dhw_png)
     if dhw_uri:
         folium.raster_layers.ImageOverlay(
-            name="DHW - NOAA CRW",
+            name=f"DHW - NOAA CRW{label_suffix}",
             image=dhw_uri,
             bounds=[[15.70, -88.90], [22.35, -83.10]],
             opacity=0.80,
