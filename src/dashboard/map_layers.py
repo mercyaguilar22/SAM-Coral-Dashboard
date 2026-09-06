@@ -23,7 +23,7 @@ from branca.colormap import LinearColormap
 from src.analysis.alerts import get_alert_color_map
 
 
-def create_base_map(center_lat: float = 18.5, center_lon: -87.5, zoom: int = 8) -> folium.Map:
+def create_base_map(center_lat: float = 18.5, center_lon: float = -87.5, zoom: int = 8) -> folium.Map:
     """Crea un mapa base con capa satelital Esri y controles interactivos."""
     m = folium.Map(
         location=[center_lat, center_lon],
