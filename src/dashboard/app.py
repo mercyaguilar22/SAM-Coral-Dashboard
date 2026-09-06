@@ -133,12 +133,19 @@ filtro_paises = st.sidebar.multiselect(
     default=CFG["region"]["countries"]
 )
 
+# Asignar países y filtrar interactivamente
+gdf_current = assign_country_by_lat_bounds(gdf_current)
+if filtro_paises and "Country" in gdf_current.columns:
+    gdf_filtered = gdf_current[gdf_current["Country"].isin(filtro_paises)]
+    if not gdf_filtered.empty:
+        gdf_current = gdf_filtered
+
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"**Fecha de Producto:** `{summary_data.get('last_updated_date', 'Hoy')}`")
 st.sidebar.markdown(f"**Frecuencia:** `Actualización diaria (06:00 UTC)`")
 st.sidebar.markdown(f"**Resolución:** `5 km (NOAA CRW v3.1)`")
 
-# 3. Encabezado Principal y KPIs
+# 3. Encabezado Principal y KPIs Dinámicos
 st.title("Sistema Arrecifal Mesoamericano (SAM)")
 st.markdown(
     "**Plataforma de Vigilancia Térmica y Calibración Regional de Alertas de Blanqueamiento Coralino**  \n"
@@ -146,11 +153,18 @@ st.markdown(
 )
 
 kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
-max_dhw_val = summary_data.get("max_dhw", 0.0)
-max_sst_val = summary_data.get("max_sst", 29.5)
-reg_alerts = summary_data.get("alerts_regional_sam", 0)
-noaa_alerts = summary_data.get("alerts_noaa_global", 0)
-early_gain = summary_data.get("early_detection_gain_points", 0)
+if not gdf_current.empty and "CRW_DHW" in gdf_current.columns:
+    max_dhw_val = float(gdf_current["CRW_DHW"].max())
+    max_sst_val = float(gdf_current["CRW_SST"].max()) if "CRW_SST" in gdf_current.columns else 29.5
+    reg_alerts = int((gdf_current["CRW_DHW"] >= THRESH_REG).sum())
+    noaa_alerts = int((gdf_current["CRW_DHW"] >= THRESH_NOAA).sum())
+    early_gain = int(((gdf_current["CRW_DHW"] >= THRESH_REG) & (gdf_current["CRW_DHW"] < THRESH_NOAA)).sum())
+else:
+    max_dhw_val = summary_data.get("max_dhw", 0.0)
+    max_sst_val = summary_data.get("max_sst", 29.5)
+    reg_alerts = summary_data.get("alerts_regional_sam", 0)
+    noaa_alerts = summary_data.get("alerts_noaa_global", 0)
+    early_gain = summary_data.get("early_detection_gain_points", 0)
 
 kpi1.metric("DHW Máximo Regional", f"{max_dhw_val:.2f} °C·sem", delta="Crítico" if max_dhw_val >= THRESH_REG else "Normal", delta_color="inverse")
 kpi2.metric("SST Máxima", f"{max_sst_val:.2f} °C" if max_sst_val else "N/A")
@@ -283,9 +297,17 @@ with tab_interop:
         """
     )
     
+    # Serialización segura de GeoJSON
+    latest_file = DAILY_DIR / "latest.geojson"
+    if latest_file.exists():
+        with open(latest_file, "r", encoding="utf-8") as f:
+            geojson_str = f.read()
+    else:
+        geojson_str = json.dumps(gdf_current.__geo_interface__, default=str)
+
     st.download_button(
         label="📥 Descargar GeoJSON del Día Actual",
-        data=gdf_current.to_json(),
+        data=geojson_str,
         file_name=f"SAM_Alertas_Coral_{datetime.utcnow().strftime('%Y%m%d')}.geojson",
         mime="application/geo+json"
     )
