@@ -50,6 +50,34 @@ def create_base_map(center_lat: float = 18.5, center_lon: float = -87.5, zoom: i
         control=True,
     ).add_to(m)
 
+    # 🛰️ Capa Raster continua satelital de SST (NOAA CoralTemp ERDDAP)
+    folium.WmsTileLayer(
+        url="https://coastwatch.pfeg.noaa.gov/erddap/wms/NOAA_DHW/request?",
+        layers="NOAA_DHW:CRW_SST",
+        name="🛰️ Raster SST Satelital (°C) - NOAA CRW",
+        fmt="image/png",
+        transparent=True,
+        overlay=True,
+        control=True,
+        show=True,
+        opacity=0.60,
+        attr="NOAA CoastWatch / Coral Reef Watch",
+    ).add_to(m)
+
+    # 🔥 Capa Raster continua satelital de DHW (Estrés Térmico Acumulado)
+    folium.WmsTileLayer(
+        url="https://coastwatch.pfeg.noaa.gov/erddap/wms/NOAA_DHW/request?",
+        layers="NOAA_DHW:CRW_DHW",
+        name="🔥 Raster DHW (°C·sem) - NOAA CRW",
+        fmt="image/png",
+        transparent=True,
+        overlay=True,
+        control=True,
+        show=False,
+        opacity=0.60,
+        attr="NOAA Coral Reef Watch",
+    ).add_to(m)
+
     Fullscreen(position="topright").add_to(m)
     MeasureControl(position="bottomleft").add_to(m)
     return m

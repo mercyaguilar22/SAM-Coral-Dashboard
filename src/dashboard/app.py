@@ -169,11 +169,24 @@ else:
     noaa_alerts = summary_data.get("alerts_noaa_global", 0)
     early_gain = summary_data.get("early_detection_gain_points", 0)
 
+if early_gain > 0:
+    early_text = f"+{early_gain} sitios"
+    early_sub = "1-3 sem anticipación"
+else:
+    early_text = "1 a 3 semanas"
+    early_sub = "15-21 días de ventaja"
+
 kpi1.metric("DHW Máximo Regional", f"{max_dhw_val:.2f} °C·sem", delta="Crítico" if max_dhw_val >= THRESH_REG else "Normal", delta_color="inverse")
 kpi2.metric("SST Máxima", f"{max_sst_val:.2f} °C" if max_sst_val else "N/A")
 kpi3.metric("Alertas Umbral Regional (2.97)", f"{reg_alerts} sitios", help="Sitios detectados bajo estrés térmico significativo para el SAM")
 kpi4.metric("Alertas Umbral NOAA (4.0)", f"{noaa_alerts} sitios", help="Sitios que superan el umbral global genérico de NOAA")
-kpi5.metric("Ganancia Detección Temprana", f"+{early_gain} sitios", delta="Sensibilidad Regional", delta_color="normal")
+kpi5.metric(
+    "Anticipación Alerta Temprana",
+    early_text,
+    delta=early_sub,
+    delta_color="normal",
+    help="El umbral regional de 2.97 °C·sem emite avisos preventivos entre 15 y 21 días antes de que NOAA global declare Alerta Nivel 1 (4.0 °C·sem)."
+)
 
 st.markdown("---")
 
