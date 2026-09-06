@@ -70,7 +70,7 @@ def create_base_map(center_lat: float = 18.5, center_lon: float = -87.5, zoom: i
         folium.raster_layers.ImageOverlay(
             name="DHW - NOAA CRW",
             image=dhw_uri,
-            bounds=[[15.00, -90.00], [22.00, -83.00]],
+            bounds=[[15.70, -88.90], [22.35, -83.10]],
             opacity=0.80,
             overlay=True,
             control=True,

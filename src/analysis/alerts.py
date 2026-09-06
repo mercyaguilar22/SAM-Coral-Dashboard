@@ -32,43 +32,45 @@ THRESH_REGIONAL = CFG["thresholds"]["regional_optimized"]
 
 def categorize_alerts(df_or_gdf: pd.DataFrame) -> pd.DataFrame:
     """
-    Asigna categorías de alerta a cada punto o registro basándose en DHW y HotSpot.
+    Asigna categorías de alerta a cada punto o registro basándose en DHW y HotSpot,
+    según la escala oficial de alerta e impacto ecológico (NOAA CRW v3.1 + Calibración Regional SAM).
     
-    Categorías:
-      - 0: Sin Estrés (DHW < 1 y HotSpot <= 0)
-      - 1: Advertencia Térmica / Watch (HotSpot > 0 y DHW < 2.97)
-      - 2: Alerta Regional SAM (2.97 <= DHW < 4.0) -> Detección temprana regional
-      - 3: Alerta Nivel 1 NOAA (4.0 <= DHW < 8.0)
-      - 4: Alerta Nivel 2 Severa (DHW >= 8.0)
+    Escala:
+      - Sin Estrés (No Stress): HotSpot <= 0 (Celeste claro)
+      - Vigilancia (Watch): 0 < HotSpot < 1 (Amarillo)
+      - Advertencia (Warning): HotSpot >= 1 y 0 < DHW < 2.97 (Naranja)
+      - Alerta Regional SAM: 2.97 <= DHW < 4.0 (Naranja Rojizo - Detección Temprana)
+      - Nivel 1 (Alert Level 1): 4.0 <= DHW < 8.0 (Rojo)
+      - Nivel 2 (Alert Level 2): 8.0 <= DHW < 12.0 (Rojo Vino / Maroon)
+      - Nivel 3 (Alert Level 3): 12.0 <= DHW < 16.0 (Marrón)
+      - Nivel 4 (Alert Level 4): 16.0 <= DHW < 20.0 (Magenta)
+      - Nivel 5 (Alert Level 5): DHW >= 20.0 (Púrpura Oscuro)
     """
     df = df_or_gdf.copy()
     
     conditions = [
+        (df["CRW_DHW"] >= 20.0),
+        (df["CRW_DHW"] >= 16.0),
+        (df["CRW_DHW"] >= 12.0),
         (df["CRW_DHW"] >= 8.0),
-        (df["CRW_DHW"] >= THRESH_NOAA),
+        (df["CRW_DHW"] >= 4.0),
         (df["CRW_DHW"] >= THRESH_REGIONAL),
+        ((df["CRW_DHW"] > 0) & (df["CRW_HOTSPOT"] >= 1.0)),
         (df["CRW_HOTSPOT"] > 0),
     ]
     
     labels = [
-        "Nivel 2 (Severo - Mortalidad Probable)",
-        "Nivel 1 (Alerta Global NOAA)",
-        "Alerta Regional SAM (Optimizada)",
-        "Advertencia Térmica (Watch)",
+        "Nivel 5 (Mortalidad Casi Completa >80%)",
+        "Nivel 4 (Mortalidad Severa >50%)",
+        "Nivel 3 (Mortalidad Multi-Especie)",
+        "Nivel 2 (Mortalidad Corales Sensibles)",
+        "Nivel 1 (Riesgo Blanqueamiento Arrecifal)",
+        "Alerta Regional SAM (Optimizada 2.97)",
+        "Advertencia (Warning)",
+        "Vigilancia (Watch)",
     ]
     
     df["alert_category"] = np.select(conditions, labels, default="Sin Estrés")
-    df["alert_code"] = np.select(
-        [
-            df["CRW_DHW"] >= 8.0,
-            df["CRW_DHW"] >= THRESH_NOAA,
-            df["CRW_DHW"] >= THRESH_REGIONAL,
-            df["CRW_HOTSPOT"] > 0
-        ],
-        [4, 3, 2, 1],
-        default=0
-    )
-    
     return df
 
 
@@ -86,7 +88,6 @@ def generate_alert_summary(gdf: gpd.GeoDataFrame) -> Dict[str, Any]:
     noaa_alerts = (df["CRW_DHW"] >= THRESH_NOAA).sum()
     severe_alerts = (df["CRW_DHW"] >= 8.0).sum()
     
-    # Diferencia de detección temprana aportada por el umbral regional
     early_warnings = ((df["CRW_DHW"] >= THRESH_REGIONAL) & (df["CRW_DHW"] < THRESH_NOAA)).sum()
     
     summary = {
@@ -107,11 +108,15 @@ def generate_alert_summary(gdf: gpd.GeoDataFrame) -> Dict[str, Any]:
 
 
 def get_alert_color_map() -> Dict[str, str]:
-    """Paleta estándar de colores para visualización de alertas."""
+    """Paleta oficial de colores según la escala de impacto NOAA CRW (Imagen de referencia)."""
     return {
-        "Sin Estrés": "#2b83ba",                             # Azul
-        "Advertencia Térmica (Watch)": "#abdda4",             # Verde claro
-        "Alerta Regional SAM (Optimizada)": "#fdae61",        # Naranja suave (alerta temprana)
-        "Nivel 1 (Alerta Global NOAA)": "#f46d43",            # Naranja fuerte
-        "Nivel 2 (Severo - Mortalidad Probable)": "#d53e4f",  # Rojo oscuro
+        "Sin Estrés": "#bbf2f6",                               # No Stress - Celeste claro
+        "Vigilancia (Watch)": "#ffff00",                       # Watch - Amarillo
+        "Advertencia (Warning)": "#f99f1b",                    # Warning - Naranja
+        "Alerta Regional SAM (Optimizada 2.97)": "#ff5500",    # Alerta Regional SAM - Naranja rojizo
+        "Nivel 1 (Riesgo Blanqueamiento Arrecifal)": "#ff0000", # Alert Level 1 - Rojo
+        "Nivel 2 (Mortalidad Corales Sensibles)": "#800000",    # AL2 - Rojo vino / Maroon
+        "Nivel 3 (Mortalidad Multi-Especie)": "#8c4a1e",        # AL3 - Marrón
+        "Nivel 4 (Mortalidad Severa >50%)": "#ff00ff",         # AL4 - Magenta / Fucsia
+        "Nivel 5 (Mortalidad Casi Completa >80%)": "#4b0082",  # AL5 - Púrpura oscuro
     }
