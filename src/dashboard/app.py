@@ -214,7 +214,7 @@ with tab_map:
         st_folium(base_map, width="100%", height=560)
         
     with col_legend:
-        st.markdown("#### Niveles de Estrés Térmico")
+        st.markdown("#### Alertas de Blanqueamiento de Coral")
         colors = get_alert_color_map()
         for label, hex_color in colors.items():
             st.markdown(
