@@ -1,10 +1,10 @@
 {
   "total_points": 1830,
   "max_dhw": 20.53,
-  "max_sst": 29.33,
+  "max_sst": 28.97,
   "alerts_regional_sam": 22,
   "alerts_noaa_global": 18,
-  "alerts_severe_level2": 9,
+  "alerts_severe_level2": 0,
   "early_detection_gain_points": 4,
   "last_updated_date": "2024-12-31",
   "last_updated_timestamp": "2024-12-31T23:59:59Z"

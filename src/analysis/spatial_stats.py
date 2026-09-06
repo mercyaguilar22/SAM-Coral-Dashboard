@@ -62,6 +62,11 @@ def aggregate_metrics_by_country(gdf: gpd.GeoDataFrame) -> pd.DataFrame:
         total = len(group)
         alerts_reg = (group["CRW_DHW"] >= THRESH_REGIONAL).sum()
         alerts_noaa = (group["CRW_DHW"] >= THRESH_NOAA).sum()
+        early_diff = max(0, alerts_reg - alerts_noaa)
+        
+        max_dhw_country = group["CRW_DHW_MAX"].max() if "CRW_DHW_MAX" in group.columns else (
+            group["max_dhw"].max() if "max_dhw" in group.columns else group["CRW_DHW"].max()
+        )
         
         records.append({
             "País": country,
@@ -69,11 +74,12 @@ def aggregate_metrics_by_country(gdf: gpd.GeoDataFrame) -> pd.DataFrame:
             "SST Media (°C)": round(group["CRW_SST"].mean(), 2) if "CRW_SST" in group.columns else np.nan,
             "SST Máx (°C)": round(group["CRW_SST"].max(), 2) if "CRW_SST" in group.columns else np.nan,
             "DHW Medio (°C·sem)": round(group["CRW_DHW"].mean(), 2),
-            "DHW Máx (°C·sem)": round(group["CRW_DHW"].max(), 2),
-            "Puntos en Alerta Regional (2.97)": int(alerts_reg),
+            "DHW Máx (°C·sem)": round(float(max_dhw_country), 2),
+            "Alertas Regional (2.97)": int(alerts_reg),
             "% Área en Alerta Regional": round((alerts_reg / total) * 100.0, 1),
-            "Puntos en Alerta NOAA (4.0)": int(alerts_noaa),
+            "Alertas NOAA (4.0)": int(alerts_noaa),
             "% Área en Alerta NOAA": round((alerts_noaa / total) * 100.0, 1),
+            "Diferencia Detección": int(early_diff),
         })
         
     df_agg = pd.DataFrame(records)

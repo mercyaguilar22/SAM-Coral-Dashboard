@@ -48,6 +48,7 @@ def categorize_alerts(df_or_gdf: pd.DataFrame) -> pd.DataFrame:
     """
     df = df_or_gdf.copy()
     
+    hs_series = df["CRW_HOTSPOT"] if "CRW_HOTSPOT" in df.columns else (df["mean_hotspot"] if "mean_hotspot" in df.columns else 0.0)
     conditions = [
         (df["CRW_DHW"] >= 20.0),
         (df["CRW_DHW"] >= 16.0),
@@ -55,8 +56,8 @@ def categorize_alerts(df_or_gdf: pd.DataFrame) -> pd.DataFrame:
         (df["CRW_DHW"] >= 8.0),
         (df["CRW_DHW"] >= 4.0),
         (df["CRW_DHW"] >= THRESH_REGIONAL),
-        ((df["CRW_DHW"] > 0) | (df["CRW_HOTSPOT"] >= 1.0)),
-        (df["CRW_HOTSPOT"] > 0),
+        ((df["CRW_DHW"] > 0) | (hs_series >= 1.0)),
+        (hs_series > 0),
     ]
     
     labels = [
@@ -90,9 +91,13 @@ def generate_alert_summary(gdf: gpd.GeoDataFrame) -> Dict[str, Any]:
     
     early_warnings = ((df["CRW_DHW"] >= THRESH_REGIONAL) & (df["CRW_DHW"] < THRESH_NOAA)).sum()
     
+    max_dhw_val = float(df["CRW_DHW_MAX"].max()) if "CRW_DHW_MAX" in df.columns else (
+        float(df["max_dhw"].max()) if "max_dhw" in df.columns else float(df["CRW_DHW"].max())
+    )
+    
     summary = {
         "total_points": total,
-        "max_dhw": float(df["CRW_DHW"].max()),
+        "max_dhw": max_dhw_val,
         "mean_dhw": float(df["CRW_DHW"].mean()),
         "max_sst": float(df["CRW_SST"].max()) if "CRW_SST" in df.columns else None,
         "alerts_regional_sam": int(reg_alerts),
