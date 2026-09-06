@@ -28,7 +28,10 @@ from src.analysis.alerts import (
     generate_alert_summary,
     get_alert_color_map,
 )
-from src.analysis.spatial_stats import aggregate_metrics_by_country
+from src.analysis.spatial_stats import (
+    aggregate_metrics_by_country,
+    assign_country_by_lat_bounds,
+)
 from src.analysis.thermal_refugia import identify_refugia_from_grid
 from src.dashboard.charts import (
     plot_country_alert_comparison,
