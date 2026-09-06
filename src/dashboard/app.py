@@ -116,7 +116,6 @@ def load_latest_data():
 gdf_current, summary_data = load_latest_data()
 
 # 2. Barra lateral (Filtros y Controles)
-st.sidebar.image("https://raw.githubusercontent.com/mercyaguilar22/SAM-Coral-Dashboard/main/docs/banner.png", use_container_width=True, fallback=None)
 st.sidebar.title("🐠 SAM Coral Monitor")
 st.sidebar.caption("Monitoreo y Alerta Temprana en Arrecifes de Coral")
 
