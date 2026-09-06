@@ -203,6 +203,30 @@ tab_map, tab_comparative, tab_series, tab_refugia, tab_interop = st.tabs([
 with tab_map:
     st.subheader("Distribución Espacial del Estrés Térmico y Alertas Activas")
     
+    # ⏳ Barra de Temporalidad Histórica (Estilo Google Earth / GEE)
+    col_t1, col_t2 = st.columns([3, 1])
+    with col_t1:
+        sel_year = st.select_slider(
+            "⏳ Línea de Tiempo Histórica:",
+            options=["Todos los años (Consolidado)", 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+            value="Todos los años (Consolidado)",
+            help="Desliza para explorar las condiciones y alertas observadas en cada año."
+        )
+    with col_t2:
+        if sel_year != "Todos los años (Consolidado)":
+            month_names = ["Todos los meses", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+            sel_month = st.selectbox("Mes:", options=range(len(month_names)), format_func=lambda i: month_names[i])
+        else:
+            sel_month = 0
+
+    # Filtrar datos espaciales según temporalidad seleccionada
+    gdf_map = gdf_current.copy()
+    if sel_year != "Todos los años (Consolidado)":
+        if "year" in gdf_map.columns:
+            gdf_map = gdf_map[gdf_map["year"] == sel_year]
+        if sel_month > 0 and "month" in gdf_map.columns:
+            gdf_map = gdf_map[gdf_map["month"] == sel_month]
+            
     col_map, col_legend = st.columns([4, 1])
     
     with col_map:
@@ -210,24 +234,23 @@ with tab_map:
                                    center_lon=CFG["region"]["dashboard_center"][1],
                                    zoom=CFG["region"]["dashboard_zoom"])
         add_sam_boundary(base_map, SAM_SHP_PATH)
-        add_alert_points(base_map, gdf_current)
+        add_alert_points(base_map, gdf_map)
         st_folium(base_map, width="100%", height=560)
         
     with col_legend:
-        st.markdown("#### Alertas de Blanqueamiento de Coral")
-        colors = get_alert_color_map()
-        for label, hex_color in colors.items():
-            st.markdown(
-                f"<div style='display: flex; align-items: center; margin-bottom: 6px;'>"
-                f"<span style='background-color: {hex_color}; width: 16px; height: 16px; border-radius: 50%; display: inline-block; margin-right: 8px;'></span>"
-                f"<span style='font-size: 13px;'>{label}</span>"
-                f"</div>",
-                unsafe_allow_html=True
+        with st.expander("ℹ️ Leyenda de Alertas", expanded=True):
+            colors = get_alert_color_map()
+            for label, hex_color in colors.items():
+                st.markdown(
+                    f"<div style='display: flex; align-items: center; margin-bottom: 5px;'>"
+                    f"<span style='background-color: {hex_color}; width: 13px; height: 13px; border-radius: 50%; display: inline-block; margin-right: 7px;'></span>"
+                    f"<span style='font-size: 12px;'>{label}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+            st.caption(
+                f"Mostrando: **{len(gdf_map)}** sitios en el período seleccionado."
             )
-        st.caption(
-            "Los puntos muestran píxeles de 5km de NOAA CRW sobre formaciones coralinas. "
-            "Haz clic en cualquier punto para ver métricas detalladas."
-        )
 
 # --- TAB 2: COMPARATIVA DE UMBRALES ---
 with tab_comparative:
